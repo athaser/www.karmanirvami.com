@@ -1,0 +1,218 @@
+$(document).ready(function () {
+
+    //create the year list
+    //only years that have a news item
+    var years = [];
+    $("#news-items li").each(function () {
+        var year = $(this).attr("data-year") / 1;
+
+        if ($.inArray(year, years) == -1)
+            years.push(year);
+
+    });
+    //create the list items
+    $(years).each(function () {
+        var li = "<li><a href='#news/" + this + "'>" + this + "</a></li>";
+        $("#year-list").append(li);
+        $("#year-list-detail").append(li);
+    });
+
+    //Hide error en thanks
+    $(".newsletter #thanks-container").hide();
+    $(".newsletter #signin-container .error-message").hide();
+    //handle newsletter subscribe en
+    $(".newsletter #signin-container .submit").live("click", function () {
+
+        var hasErrors = false;
+        var errorMessage = "";
+
+        var name = $(".newsletter #signin-container form .name").val();
+        var email = $(".newsletter #signin-container form .email").val();
+        var country = $(".newsletter #signin-container form .country").val();
+
+        $(".newsletter #signin-container form input[type=text]").removeClass("error");
+
+        if (name == "") { errorMessage += "Please enter a name<br />"; hasErrors = true; $(".newsletter #signin-container form .name").addClass("error"); }
+        if (email == "") { errorMessage += "Please enter an e-mail address<br />"; hasErrors = true; $(".newsletter #signin-container form .email").addClass("error"); }
+        if (country == "") { errorMessage += "Please enter a country<br />"; hasErrors = true; $(".newsletter #signin-container form .country").addClass("error"); }
+
+        var emailRegex = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/;
+        if (!emailRegex.test(email) && email != "") { errorMessage += "Please enter a valid email<br />"; hasErrors = true; $(".newsletter #signin-container form .email").addClass("error"); }
+
+
+        if (!hasErrors) {
+
+            var campaignUrl = "http://campagnes.cap47.be/t/y/s/oyudku/?cm-oyudku-oyudku=" + email + "&cm-name=" + name;
+            $.get(campaignUrl, function (data) {
+                //
+            });
+
+            $(".newsletter #thanks-container").fadeIn("fast");
+            $(".newsletter #signin-container").fadeOut("fast");
+            $(".newsletter #signin-container .error-message").hide();
+
+        }
+        else {
+
+            $(".newsletter #signin-container .error-message").html(errorMessage);
+            $(".newsletter #signin-container .error-message").fadeIn("fast");
+        }
+
+
+        return false;
+    });
+
+    $(".newsletter #thanks-container .submit").live("click", function () {
+
+        $(".newsletter #thanks-container").fadeOut("fast");
+        $(".newsletter #signin-container").fadeIn("fast");
+
+        $(".newsletter #signin-container input[type=text]").val("");
+
+    });
+
+
+
+
+    //Make only the latest year news-item visible
+    handleYearChange(Math.max.apply(Math, years));
+
+
+    //Scroller year
+    var scrollerYear = new Scroller($("#year-holder"), $("#year-list"), 330, true, $(".news .next-arrow"), $(".news .prev-arrow"));
+    var scrollerYearDetails = new Scroller($("#year-holder-detail"), $("#year-list-detail"), 330, true, $(".news-detail .next-arrow"), $(".news-detail .prev-arrow"));
+    //scroller news items
+    var scrollerNews = new Scroller($("#news-holder"), $("#news-items"), 150, true, $(".news .buttons .next"), $(".news .buttons .prev"));
+    var scrollerNewsDetail = new Scroller($("#detail-holder"), $("#detail-content"), 240, true, $(".news-detail .buttons .next"), $(".news-detail .buttons .prev"));
+
+    $(window).resize(handleNewsResize);
+    handleNewsResize();
+});
+
+
+function handleNewsResize() {
+
+    //plaats de next,perv-buttons op de rand van de achtergrond foto
+    //we kunnen geen offset() gebruiken omdat het geroteerd staat
+
+    //160is marge links
+    var left = browserWidth - $(".news .bgimage").width();
+    $(".news .buttons").css("left", left + "px");
+    $(".news-detail .buttons").css("left", left + "px");
+
+    //De breedte van de news items zetten, zodat ze niet over de afbeelding gaan
+    $(".news .content #news-holder ul#news-items").width(browserWidth * 0.55 - 180);
+    $(".news-detail .content #detail-holder #detail-content").width(browserWidth * 0.55 - 180);
+
+    $(".bio-button").css("left", left + 100);
+
+
+
+}
+
+
+
+function loadNewsItem(newsId) {
+
+    var newsItem = {
+        "id": newsId
+    };
+
+    $.get(
+        "/news/getNewsItem",
+        newsItem,
+        function (json) {
+            //current news item
+            data = json.current;
+			
+
+            $("#detail-content .date").html(data.DateString);
+            $("#detail-content h3").html(data.Title);
+            $("#detail-content p").html(data.LongContent);
+
+            var url = window.location.href.replace("#", "%23");
+
+            $(".news-detail .share .twitter a").attr("href", "http://twitter.com/home/?status='" + data.Title + "' " + url);
+            $(".news-detail .share .facebook a").attr("href", "http://www.facebook.com/sharer.php?u=" + window.location.href + "&t=" + data.Title.replace(" ", "+"));
+
+            $(".news-detail .share .google-plus a").attr("href", "https://plusone.google.com/_/+1/confirm?hl=en&url=" + url);
+            // $(".news-detail .share .google-plus a").attr("onclick", "window.open('https://m.google.com/app/plus/x/?v=compose&content=" + data.Title + " " + url + "','gplusshare','width=450,height=300,left='+(screen.availWidth/2-225)+',top='+(screen.availHeight/2-150)+'');return false;");
+
+            //reset scrolling
+            $(".news-detail .content #detail-holder #detail-content").css("margin-top", 0);
+
+            $("#detail-content h3").css("width", "350px");
+            $(window).trigger("resize");
+            $("#detail-content h3").css("width", "350px");
+
+            if (json.next != null) {
+                $(".news-detail .next-news").show();
+                $(".news-detail .next-news").html("next: " + json.next.Title);
+                $(".news-detail .next-news").attr("href", "#newsdetail/" + json.next.Id);
+            }
+            else {
+                $(".news-detail .next-news").hide();
+            }
+
+            if (json.prev != null) {
+                $(".news-detail .prev-news").show();
+                $(".news-detail .prev-news").html("prev: " + json.prev.Title);
+                $(".news-detail .prev-news").attr("href", "#newsdetail/" + json.prev.Id);
+            }
+            else {
+                $(".news-detail .prev-news").hide();
+            }
+
+
+
+            return false;
+        }
+    );
+
+    var url = window.location.href;
+
+    /*$.getJSON("http://urls.api.twitter.com/1/urls/count.json?url=" + url + "&callback=?", function (data) {
+        $(".news-detail .share .twitter .word").html("tweet " + data.count);
+    });
+
+    $.getJSON("https://graph.facebook.com/" + url + "&callback=?", function (data) {
+        $(".news-detail .share .facebook .word").html("like " + data.shares == undefined ? "" : data.shares);
+    });*/
+
+
+
+
+
+    return false;
+}
+
+function handleYearChange(year) {
+
+    $("#year-list li a.selected").removeClass("selected");
+    $("#year-list-detail li a.selected").removeClass("selected");
+
+    $("#year-list li a").each(function () {
+        if ($(this).attr("href").substr($(this).attr("href").indexOf("/") + 1) / 1 == year) {
+            $(this).addClass("selected");
+        }
+    });
+    $("#year-list-detail li a").each(function () {
+        if ($(this).attr("href").substr($(this).attr("href").indexOf("/") + 1) / 1 == year) {
+            $(this).addClass("selected");
+        }
+    });
+
+
+    filterYear(year);
+    $(window).trigger("resize");
+}
+
+
+function filterYear(selectedYear) {
+    $("#news-items li").each(function () {
+        var year = $(this).attr("data-year") / 1;
+
+        //show the right news items
+        (year == selectedYear) ? $(this).addClass("visible").show("fast") : $(this).removeClass("visible").hide("fast");
+    });
+}

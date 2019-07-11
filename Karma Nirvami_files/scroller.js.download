@@ -1,0 +1,103 @@
+//direction is boolean: true => down; false =>left
+
+function Scroller(holder, scroller, margin, direction, btnNext, btnPrev)
+{
+	var holderDimension = 0;
+	var ulPos;
+	var ulDimension;
+	
+	this.scrollNext = function(){
+		ulPos = (direction) ? $(scroller).css("margin-top").replace("px", "")/1 : $(scroller).css("margin-left").replace("px", "")/1;
+		ulDimension = (direction) ? $(scroller).height() : $(scroller).width();
+		
+		var diff =  ulPos + ulDimension - holderDimension;
+		
+		if(!$(btnNext).hasClass("disabled") && diff > 0)
+		{
+			
+			var target = holderDimension > diff ? diff : holderDimension;
+			
+			if(target ==  diff)
+				$(btnNext).addClass("disabled");	
+			$(btnPrev).removeClass("disabled");				
+				
+			target -=ulPos; 
+			(direction) ? $(scroller).animate({"margin-top" : -target}, 500) : $(scroller).animate({"margin-left" : -target}, 500);
+		}
+		
+	};
+	this.scrollPrev = function(){
+		
+		ulPos = (direction) ? $(scroller).css("margin-top").replace("px", "")/1 : $(scroller).css("margin-left").replace("px", "")/1;
+		
+		if(!$(btnPrev).hasClass("disabled") && ulPos < 0)
+		{
+			var target = Math.min(holderDimension,-ulPos); 
+			target += ulPos;
+			
+			if(target == 0)
+				$(btnPrev).addClass("disabled");				
+			$(btnNext).removeClass("disabled");
+			
+			
+			(direction) ? $(scroller).animate({"margin-top" : target}, 500) : $(scroller).animate({"margin-left" : target}, 500);
+			
+		}
+			
+	};
+
+	this.handleResize = function () {
+	    var oldHolderDimension = holderDimension;
+	    if (direction) {
+	        holderDimension = browserHeight - margin;
+	        holderDimension = Math.min(holderDimension, $(scroller).height());
+	    }
+	    else {
+	        holderDimension = browserWidth - margin;
+	        //holderDimension = Math.min(holderDimension, $(scroller).width());
+	    }
+
+	    (direction) ? $(holder).height(holderDimension) : $(holder).width(holderDimension);
+
+	    ulPos = (direction) ? $(scroller).css("margin-top").replace("px", "") / 1 : $(scroller).css("margin-left").replace("px", "") / 1;
+	    ulDimension = (direction) ? $(scroller).height() : $(scroller).width();
+
+
+	    //wanneer er niet moet gescrold worden
+	    if (ulDimension <= holderDimension) {
+	        $(btnNext).hide();
+	        $(btnPrev).hide();
+	    } else {
+	        $(btnNext).show();
+	        $(btnPrev).show();
+	    }
+
+
+	    //zolang er moet gescrolld worden, schuift de ul mee, behalve wanneer de UL al helmaal links staat
+	    /*if(ulDimension > holderDimension && ulPos < 0)	
+	    {
+	    var diff = holderDimension - oldHolderDimension;
+			
+	    if(ulPos + diff <0 && diff > 0)
+	    {
+	    console.log("diff: " + diff + " old ulpos: " + ulPos + " new: " + (ulPos + diff));
+	    ulPos += diff;
+	    (direction) ? $(scroller).css("margin-top", ulPos +"px") : $(scroller).css("margin-left", ulPos + "px");	
+	    }
+			
+			
+	    }*/
+
+
+	}
+	
+	
+	//Add eventlisteners
+	$(btnNext).click(this.scrollNext);
+	$(btnPrev).click(this.scrollPrev);
+	$(window).resize(this.handleResize);
+	
+	//set the right dimensions at start
+	this.handleResize();
+		
+}
