@@ -1,0 +1,51 @@
+/* CSS Document */
+
+@font-face {
+    font-family: 'UniversLTStd39ThUltraCn';
+    src: url('../assets/fonts/UniversLTStd-39ThinUltraCondensed/universltstd-thinultracn-webfont.eot');
+    src: url('../assets/fonts/UniversLTStd-39ThinUltraCondensed/universltstd-thinultracn-webfont.eot?#iefix') format('embedded-opentype'),
+         url('../assets/fonts/UniversLTStd-39ThinUltraCondensed/universltstd-thinultracn-webfont.woff') format('woff'),
+         url('../assets/fonts/UniversLTStd-39ThinUltraCondensed/universltstd-thinultracn-webfont.ttf') format('truetype');
+
+}
+
+@font-face {
+    font-family: 'UniversLTStd57Condensed';
+    src: url('../assets/fonts/UniversLTStd-57Condensed/universltstd-cn-webfont.eot');
+    src: url('../assets/fonts/UniversLTStd-57Condensed/universltstd-cn-webfont.eot?#iefix') format('embedded-opentype'),
+         url('../assets/fonts/UniversLTStd-57Condensed/universltstd-cn-webfont.woff') format('woff'),
+         url('../assets/fonts/UniversLTStd-57Condensed/universltstd-cn-webfont.ttf') format('truetype'),
+         url('../assets/fonts/UniversLTStd-57Condensed/universltstd-cn-webfont.svg#UniversLTStd57Condensed') format('svg');
+
+}
+
+@font-face {
+    font-family: 'UniversLTStd47LightCondensed';
+    src: url('../assets/fonts/UniversLTStd-47LightCondensed/universltstd-lightcn-webfont.eot');
+    src: url('../assets/fonts/UniversLTStd-47LightCondensed/universltstd-lightcn-webfont.eot?#iefix') format('embedded-opentype'),
+         url('../assets/fonts/UniversLTStd-47LightCondensed/universltstd-lightcn-webfont.woff') format('woff'),
+         url('../assets/fonts/UniversLTStd-47LightCondensed/universltstd-lightcn-webfont.ttf') format('truetype'),
+         url('../assets/fonts/UniversLTStd-47LightCondensed/universltstd-lightcn-webfont.svg#UniversLTStd47LightCondensed') format('svg');
+
+}
+
+
+@font-face {
+    font-family: 'UniversLTStd49LtUltraCn';
+    src: url('../assets/fonts/UniversLTStd-49LightUltraCondensed/universltstd-lightultracn-webfont.eot');
+    src: url('../assets/fonts/UniversLTStd-49LightUltraCondensed/universltstd-lightultracn-webfont.eot?#iefix') format('embedded-opentype'),
+         url('../assets/fonts/UniversLTStd-49LightUltraCondensed/universltstd-lightultracn-webfont.woff') format('woff'),
+         url('../assets/fonts/UniversLTStd-49LightUltraCondensed/universltstd-lightultracn-webfont.ttf') format('truetype'),
+         url('../assets/fonts/UniversLTStd-49LightUltraCondensed/universltstd-lightultracn-webfont.svg#UniversLTStd49LtUltraCn') format('svg');
+
+}
+
+@font-face {
+    font-family: 'UniversLTStd59UltraCondensed';
+    src: url('../assets/fonts/UniversLTStd-59UltraCondensed/universltstd-ultracn-webfont.eot');
+    src: url('../assets/fonts/UniversLTStd-59UltraCondensed/universltstd-ultracn-webfont.eot?#iefix') format('embedded-opentype'),
+         url('../assets/fonts/UniversLTStd-59UltraCondensed/universltstd-ultracn-webfont.woff') format('woff'),
+         url('../assets/fonts/UniversLTStd-59UltraCondensed/universltstd-ultracn-webfont.ttf') format('truetype'),
+         url('../assets/fonts/UniversLTStd-59UltraCondensed/universltstd-ultracn-webfont.svg#UniversLTStd59UltraCondensed') format('svg');
+
+}
