@@ -1,0 +1,424 @@
+var onExit = "";
+var oldId = "";
+var newId = "";
+var loaded = false;
+var notLoadedPos = null;
+var videoHtml = "";
+var hasParams = false;
+
+
+$(document).ready(function () {
+
+
+
+    $.address.change(function (event) {
+		
+		hasParams = false;
+
+
+        //verwijder het eerste "/" dat er altijdstaat bij Jquery address
+        var id = event.value.substr(1).toLowerCase();
+        
+        //kijken of er een parameter is meegegeven aan de link
+        if (id.indexOf("/") > -1) {
+            //de parameters uit de url halen   
+            var param = id.substr(id.indexOf("/") + 1).split("/");
+            hasParams = true;
+            //de parameter verwijderen bij naam van pagina
+            id = id.substr(0, id.indexOf("/"));
+
+            //naar gelang de pagina een functie uitvoeren met de parameter
+            switch (id) {
+                case "news":
+                    handleYearChange(param[0] / 1);
+                    break;
+                case "newsdetail":
+                    loadNewsItem(param[0] / 1);
+                    break;
+                case "albumsongs":
+                    showAlbumSongs(param[0] / 1);
+                    break;
+                case "songdetail":
+                    loadSongItem(param[0] / 1, param[1] / 1);
+                    break;
+                case "media":
+                    showAlbumMedia(param[0] / 1);
+                    break;
+            }
+
+
+        }
+  
+  if(isSafari())
+  {
+   $("#outer canvas").hide();
+  }
+
+        //AZls het leeg is naar de homepagina sturen
+        if (id == "" || id == null || id == undefined)
+            id = "home";
+        else if (id == oldId) {
+            return;
+        }
+
+        newId = id;
+        //alle media opnieuw tonen 
+        if (id == "media" && hasParams == false) {
+			
+			showVideoContainer();
+            showAllMedia();
+        } else {
+            hideVideo();
+        }
+
+
+
+
+        var posObj = getPosObj(id).posObj;
+
+
+        if (loaded) {
+            //als je van niews komt en naar detail geaat en omgekeerd, mag er geen animatie meer zijn
+            if (!(newId == "news" && oldId == "newsdetail") && !(oldId == "news" && newId == "newsdetail")) {
+                if (!noZooming()) {
+                    zoomOut();
+                }
+            }
+
+            change(posObj.angle, posObj.left, posObj.top);
+
+
+        }
+        else {
+            notLoadedPos = posObj;
+        }
+
+        //alle muziek doen stoppen met spelen
+        $(".jp-stop").trigger("click");
+
+
+
+        $("#outer").hide();
+
+
+        //als het home is, moet muziek automatisch beginnen spelen
+        if (id == "home") {
+            if (!isMobile()) {
+                $(".home .track").trigger("click");
+            }
+
+
+        }
+        $("#canvas").hide();
+
+        if (isMobile()) {
+			
+			var newIdForMobile = id;
+			
+			if(id == "newsdetail")
+			{
+				newIdForMobile = "news-detail";
+			}
+			
+            $(".page").hide();
+            $("." + newIdForMobile).show();
+        }
+
+
+        if (onExit != "") {
+            window[onExit]();
+            onExit = "";
+        }
+
+        $("#lyrics").css("margin-top", 0);
+
+        if (id == "media")
+            onExit = "hideVideo";
+
+        if (posObj.onReady != null) {
+            window.setTimeout(window[posObj.onReady], 2000);
+        }
+        currentPageIndex = getPosObj(id).index;
+
+        oldId = id;
+
+        $(window).trigger("resize");
+    });
+
+});
+
+
+function startAnimation() {
+
+
+    if (!noRotation()) {
+        //set all the transformation to stating point
+        $(".wrapper").css("-webkit-transform", "scale(0.2, 0.2)");
+        $(".wrapper").css("-o-transform", "scale(0.2, 0.2)");
+        $(".wrapper").css("-ms-transform", "scale(0.2, 0.2)");
+        $(".wrapper").css("-moz-transform", "scale(0.2, 0.2)");
+        $(".wrapper").css("transform", "scale(0.2, 0.2)");
+    }
+
+    $("#loader").show();
+    $(".wrapper").hide();
+
+    //wanneer alles is ingeladen, de animatie starten
+    $(window).load(function () {
+        loaded = true;
+
+        $("#loader").hide();
+        $(".wrapper").fadeIn("slow");
+
+
+
+        if (notLoadedPos != null)
+
+            change(notLoadedPos.angle, notLoadedPos.left, notLoadedPos.top);
+
+        if (!noRotation()) {
+            $("#forZoomAnimation").css("opacity", 0.3);
+            window.setTimeout(zoomIn, 1001);
+        }
+
+        $(window).trigger("resize");
+    });
+
+
+}
+
+
+
+
+
+function change(targetAngle, targetLeft, targetTop) {
+
+    var smallestTargetAngle = targetAngle;
+    var speed = noZooming() ? 2 : 1;
+
+    //als je van niews komt en naar detail geaat en omgekeerd, mag er geen animatie meer zijn
+    if ((newId == "news" && oldId == "newsdetail") || (oldId == "news" && newId == "newsdetail") || isMobile())
+      { 
+	  	speed = 2000;
+	  }
+
+
+    $("#forTransformAnimation").css("margin-left", currentAngle);
+    $("#forTransformAnimation").animate({ "margin-left": smallestTargetAngle },
+ {
+     step: function (now, fx) {
+
+
+         $(".container").css('-webkit-transform', 'rotate(' + now + 'deg)');
+         $(".container").css('-o-transform', 'rotate(' + now + 'deg)');
+         $(".container").css('-ms-transform', 'rotate(' + now + 'deg)');
+         $(".container").css('-moz-transform', 'rotate(' + now + 'deg)');
+         $(".container").css('transform', 'rotate(' + now + 'deg)');
+
+         currentAngle = now;
+
+     }, duration: 2000 / speed
+ }, "linear");
+
+    $(".container").animate({ "margin-left": targetLeft, "margin-top": targetTop }, 2000 / speed, "linear",
+        function () {
+            if (newId != "media") { hideVideo(); }
+            if (newId == "home" && isMobile() == false) {
+                //show particles
+                $("#outer").show();
+            }
+
+            if (newId == "ontour" && isMobile() == false) {
+                reset();
+                $("#canvas").show();
+
+            }
+
+        });
+
+
+
+
+
+}
+
+
+function getPosObj(id) {
+    var obj;
+    var i = 0;
+    //IE8 en lager hebben geen rotatie
+    var a = noRotation() ? containerPosIE8 : containerPos;
+
+    $(a).each(function (index, item) {
+
+        if (id == item.id) {
+            obj = item;
+            i = index;
+        }
+    });
+
+    return { posObj: obj, index: i };
+}
+
+
+
+
+function zoomOut() {
+
+    $("body").css("background-color", "#fff");
+
+    $("#forZoomAnimation").animate({ "opacity": 0.5 },
+ {
+     step: function (now, fx) {
+
+         $(".wrapper").css("-webkit-transform", "scale(" + now + "," + now + ")");
+         $(".wrapper").css("-moz-transform", "scale(" + now + "," + now + ")");
+         $(".wrapper").css("-ms-transform", "scale(" + now + "," + now + ")");
+         $(".wrapper").css("-o-transform", "scale(" + now + "," + now + ")");
+         $(".wrapper").css("transform", "scale(" + now + "," + now + ")");
+
+         if ($.browser.version / 1 < 9 && $.browser.msie) {
+             $(".wrapper").css("filter", "progid:DXImageTransform.Microsoft.Matrix(M11=" + now + ", M12=0, M21=0, M22=" + now + ", SizingMethod='auto expand')");
+         }
+
+     }, duration: 1000
+ }, "linear");
+
+
+    window.setTimeout(zoomIn, 1001);
+
+}
+
+function zoomIn() {
+
+    $("#forZoomAnimation").animate({ "opacity": 1 },
+ {
+     step: function (now, fx) {
+
+         $(".wrapper").css("-webkit-transform", "scale(" + now + "," + now + ")");
+         $(".wrapper").css("-moz-transform", "scale(" + now + "," + now + ")");
+         $(".wrapper").css("-ms-transform", "scale(" + now + "," + now + ")");
+         $(".wrapper").css("-o-transform", "scale(" + now + "," + now + ")");
+         $(".wrapper").css("transform", "scale(" + now + "," + now + ")");
+
+         if ($.browser.version / 1 < 9 && $.browser.msie) {
+             $(".wrapper").css("filter", "progid:DXImageTransform.Microsoft.Matrix(M11=" + now + ", M12=0, M21=0, M22=" + now + ", SizingMethod='auto expand')");
+         }
+
+     }, duration: 1000
+ }, "linear");
+
+    window.setTimeout(function () { $(window).trigger("resize"); }, 1000);
+
+}
+
+function showVideo(forceShow) {
+	
+	forceShow = typeof forceShow !== 'undefined' ? forceShow : false;
+	
+    if ((newId == "media" && hasParams == false) || forceShow) {
+	
+        if (videoHtml.length > 0) {
+            $(videoHtml).insertAfter(".wrapper");
+       }
+		
+
+        var xPos = $("#video-replacer").offset().left;
+        var yPos = $("#video-replacer").offset().top;
+
+        if ($.browser.mozilla) {
+            xPos = $("#video-replacer").css("left");
+            yPos = $("#video-replacer").css("top");
+        }
+
+
+
+        $("#video-frame").css("left", "75px");
+        $("#video-frame").css("top", "308px");
+
+        $("#video-replacer").css("display", "none");
+        $("#video-frame").css("display", "block");
+
+        $(".thumblist li").eq(0).trigger("click");
+		
+		videoIsVisible = true;
+    }
+    onExit = "hideVideo";
+	
+
+}
+
+function hideVideo() {
+	
+   if ($("#video-frame").length > 0) {
+		
+        videoHtml = $("#video-frame");
+   		
+		
+		$("#video-frame").hide();
+		$("#video-replacer").css("display", "block");
+	
+		$("#video-frame").remove();
+		videoIsVisible = false;
+	}
+	
+	
+}
+
+
+function showAllMedia() {
+    $.get(
+        "/photo/getAllAlbumPhotos",
+        function (data) {
+
+            //zet album title
+
+            //zet alle fotos
+            setHTMLPhotos(data);
+
+            return false;
+        });
+}
+
+
+
+function isMobile() {
+
+    var mobile = false;
+
+    if (navigator.userAgent.match(/Android/i) ||
+     navigator.userAgent.match(/webOS/i) ||
+     navigator.userAgent.match(/iPhone/i) ||
+     navigator.userAgent.match(/iPod/i) ||
+     navigator.userAgent.match(/iPad/i) ||
+     navigator.userAgent.match(/BlackBerry/)
+     ) {
+        mobile = true;
+    }
+
+    return mobile;
+
+}
+
+function isIpad() {
+
+    var ipad = false;
+
+    if (navigator.userAgent.match(/iPad/i)) {
+        ipad = true;
+    }
+
+    return ipad;
+
+}
+
+function isSafari(){
+ var safari = false;
+ 
+ if (jQuery.browser.webkit && (navigator.appVersion.indexOf('5.') != -1) && navigator.appVersion.indexOf("Chrome") == -1) {
+  
+  safari = true;
+ }
+ 
+ return safari;
+}

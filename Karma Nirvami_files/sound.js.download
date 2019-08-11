@@ -1,0 +1,101 @@
+var timer = 0;
+var myAudio = null;
+var stopsound = false;
+$(document).ready(function () {
+
+
+    $("a.track").live("click", function () {
+
+        if (!$(this).hasClass("no-hide")) {
+            $(".track").css("display", "inline");
+            $(".jp-stop").css("display", "none");
+
+            if (!$(this).hasClass("bonom-song")) {
+                $(this).css("display", "none");
+                $(this).parent().find(".jp-stop").css("display", "inline");
+            }
+        }
+
+
+        var soundfile = $(this).attr("href");
+
+
+
+        $("#soundplayer").html("<embed src=\"" + soundfile + "\" hidden=\"true\" autostart=\"true\" loop=\"false\" />");
+
+        if ($(this).hasClass("home-song")) {
+            $("#soundplayer").html("<embed type='audio/mpeg' src=\"" + soundfile + "\" hidden=\"true\" autostart=\"true\" loop=\"true\" />");
+        }
+
+        if ($.browser.webkit) {
+            $("#soundplayer").html("<audio id='audio-player' autoplay><source src=" + soundfile + " type='audio/mp3' /></audio>");
+
+            if ($(this).hasClass("home-song")) {
+                myAudio = new Audio(soundfile);
+                myAudio.addEventListener('ended', function () {
+                    if (stopsound == false) {
+                        this.currentTime = 0;
+                        this.play();
+                    }
+                }, false);
+                //myAudio.play();
+                stopsound = false;
+            }
+
+        }
+
+        var stoplink = $(this).parent().find(".jp-stop");
+
+        if (!$(this).hasClass("home-song")) {
+            timer = setTimeout(function () {
+                if (myAudio != null) {
+                    stopsound = true;
+                    myAudio.pause();
+                    myAudio = null;
+                }
+
+                $("#soundplayer").html("");
+
+                if (!$(stoplink).hasClass("bonom-song")) {
+                    $(stoplink).css("display", "none");
+                    $(stoplink).parent().find(".track").css("display", "inline");
+                }
+            }, 60000);
+
+        }
+
+
+
+        return false;
+    });
+
+    $(".jp-stop").live("click", function () {
+        if (myAudio != null) {
+            try {
+                stopsound = true;
+                myAudio.currentTime = myAudio.duration - 1;
+                myAudio.pause();
+                $(document).remove("audio");
+                myAudio = null;
+            }
+            catch (err)
+            { }
+
+        }
+
+
+        clearTimeout(timer);
+
+        $("#soundplayer").html("");
+
+        if (!$(this).hasClass("bonom-song")) {
+            $(this).css("display", "none");
+            $(this).parent().find(".track").css("display", "inline");
+        }
+
+        return false;
+    });
+
+});
+
+

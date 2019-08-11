@@ -1,0 +1,417 @@
+var ulLeft;
+var ulWidth;
+var holderWidth;
+var isAnimating = false;
+var amountThumbs = 15;
+var videoIsVisible = true;
+var loadedIndex = 0
+
+
+function setVideos(ytData) {
+    var items;
+    try {
+       items = ytData.items;
+    }
+    catch (err)
+    { }
+
+    if (items != null) {
+        amountThumbs = items.length;
+
+        //Set replace image source
+
+        // in commentaar door Tim, geeft fouten (wellicht door veranderingen api)
+        //// $("#video-replacer").attr("src", items[0].thumbnail.sqDefault);
+
+        var thumbnail = "";
+        thumbnail = items[0].snippet.thumbnails.high;
+        if (!thumbnail || thumbnail == "") {
+            thumbnail = items[0].snippet.thumbnails.medium;
+        }
+        if (!thumbnail || thumbnail == "") {
+            thumbnail = items[0].snippet.thumbnails.default;
+        }
+        
+        $("#video-replacer").attr("src", thumbnail);
+
+        //reset inner html thumbnails ul
+        $(".thumblist").html("");
+        //create thumbnail images
+
+        for (var i = 0; i < items.length; i++) {
+            if (items[i].id.kind != "youtube#channel") {
+                var vidData = items[i];
+
+                var listitem = '<li data-id="' + vidData.id.videoId + '">';
+
+                var thumbnailUrl = "";
+                thumbnailUrl = vidData.snippet.thumbnails.medium;
+
+                if (!thumbnailUrl || thumbnailUrl == "") {
+                    thumbnailUrl = vidData.snippet.thumbnails.high;
+                }
+                if (!thumbnailUrl || thumbnailUrl == "") {
+                    thumbnailUrl = vidData.snippet.thumbnails.default;
+                }
+
+                listitem += '<img width="160" src="' + thumbnailUrl.url + '" alt="" />';
+
+                var date = new Date(vidData.snippet.publishedAt);
+                listitem += '<h3>' + vidData.snippet.title + ' <span class="date">' + /*date.getDay() + "/" + date.getMonth() + "/" + date.getYear() + */'</span></h3>';
+
+                listitem += "</li>";
+                $(".thumblist").append(listitem);
+            }
+        }
+
+
+        //Add Eventlistener changing video
+        $(".thumblist li").bind("click", function () {
+
+            var id = $(this).attr("data-id");
+            $("#video-frame").attr("src", "http://www.youtube.com/embed/" + id);
+            $(".big-video h3").html($(this).find("h3").html());
+            var url = $(this).find("img").attr("src");
+            $("#video-replacer").attr("src", url);
+
+        });
+
+        //set big video
+        $(".thumblist li").eq(0).trigger("click");
+        //zet alles mooi
+        $(window).trigger("resize");
+    }
+}
+
+$(document).ready(function () {
+
+   
+
+
+
+    auditDetails: 4
+    brandingSettings: 2
+    contentDetails: 2
+    contentOwnerDetails: 2
+    id: 0
+    invideoPromotion: 2
+    localizations: 2
+    snippet: 2
+    statistics: 2
+    status: 2
+    topicDetails: 2
+
+
+
+    //Zet de breedte van de ul thumblist, zodat alle thumbs op 1 lijn staan (en niet onder elkaar)
+    //25 px = martgin-right
+    var widthThumbsHolder = amountThumbs * (160 + 10);
+    $(".thumblist").width(widthThumbsHolder);
+
+
+
+
+    //Set resize event listener
+    $(window).resize(handleResizeVideo);
+    handleResizeVideo();
+
+
+    //change view
+    $("#switcher li a").click(function () {
+
+
+        if ($(this).parent().hasClass("photo") && videoIsVisible) {
+            showPhotoContainer();
+            $("#switcher").find(".active").removeClass("active").addClass("temp-class");
+            $("#switcher").find(".not-active").removeClass("not-active").addClass("active");
+            $("#switcher").find(".temp-class").removeClass("temp-class").addClass("not-active");
+        }
+
+        if ($(this).parent().hasClass("video") && !videoIsVisible) {
+            showVideoContainer();
+            $("#switcher").find(".active").removeClass("active").addClass("temp-class");
+            $("#switcher").find(".not-active").removeClass("not-active").addClass("active");
+            $("#switcher").find(".temp-class").removeClass("temp-class").addClass("not-active");
+        }
+
+        return false;
+    });
+
+    //scrollen photo
+    var scrollerPhoto = new Scroller($("#photo-content"), $("#photo-content ul.images"), 300, false, $("#photo-content ul.buttons .next"), $("#photo-content ul.buttons .prev"));
+
+
+    //LAZY LOADING    
+    $("#photo-content ul.buttons .next").click(lazyLoadingImages);
+
+
+    //SCROLLEN
+    $("#video-content .buttons .prev").click(function () {
+
+        ulLeft = $(".thumblist").css("margin-left").replace("px", "") / 1;
+
+        if (!$(this).hasClass("disabled") && ulLeft < 0 && !isAnimating) {
+
+            var targetPos = holderWidth < -ulLeft ? holderWidth : -ulLeft;
+            targetPos += ulLeft;
+
+            if (targetPos == 0)
+                $(this).addClass("disabled");
+            $("#video-content .buttons .next").removeClass("disabled");
+
+
+            isAnimating = true;
+            $(".thumblist").animate({ "margin-left": targetPos }, 300, function () { isAnimating = false; });
+
+        }
+    });
+    $("#video-content .buttons .next").click(function () {
+
+        ulLeft = $(".thumblist").css("margin-left").replace("px", "") / 1;
+        var diff = ulLeft + ulWidth - holderWidth;
+        if (!$(this).hasClass("disabled") && ulWidth > holderWidth && !isAnimating && 0 < diff) {
+
+            var targetPos = holderWidth > diff ? diff : holderWidth;
+
+
+            if (targetPos == diff)
+                $(this).addClass("disabled");
+            $("#video-content .buttons .prev").removeClass("disabled");
+
+            targetPos -= ulLeft;
+
+            isAnimating = true;
+            $(".thumblist").animate({ "margin-left": -targetPos }, 300, function () { isAnimating = false; });
+
+
+        }
+    });
+
+
+
+
+
+    $('.images li a').lightBox();
+
+});
+
+
+function lazyLoadingImages()
+{
+        //calculate amount items visible
+        var amountVisible = Math.round($("#photo-content").width() / 180) + 5;
+
+        for (var i = 0; i < amountVisible; i++) {
+            var src = $($(".images li img")[i + loadedIndex]).attr("data-src");
+            $($(".images li img")[i + loadedIndex]).attr("src", src);
+        }
+
+        loadedIndex += amountVisible;
+
+
+}
+
+function handleResizeVideo() {
+
+    var photoListWidth = $(".media .content #photo-content ul.images li").length * 195;
+    $(".media .content #photo-content ul.images").width(photoListWidth);
+
+    //Set width video scroller
+    $("#video-content").width(browserWidth - 300);
+    $("#thumbholder").width(browserWidth - 636);
+
+
+
+    var oldHolderWidth = holderWidth;
+    holderWidth = browserWidth - 636;
+
+    var widthThumbsHolder = amountThumbs * (160 + 10);
+    $(".thumblist").width(widthThumbsHolder);
+
+
+    ulLeft = $(".thumblist").css("margin-left").replace("px", "") / 1;
+
+
+    //bij de eerste keer is er geen aanpassing nodig
+    if (ulWidth != undefined && ulWidth > 0 && holderWidth > 0 && holderWidth != undefined) {
+        //zolang er moet gescrolld worden, schuift de ul mee
+        if (ulWidth > holderWidth) {
+            var diff = holderWidth - oldHolderWidth;
+            if (ulLeft < 0 && ulLeft + diff < 0) {
+                ulLeft += diff;
+                $(".thumblist").css("margin-left", ulLeft + "px");
+            }
+        }
+
+        //reset buttons
+        if (ulWidth + ulLeft > holderWidth)
+            $("#video-content .buttons .next").removeClass("disabled");
+        else
+            $("#video-content .buttons .next").addClass("disabled");
+        if (ulLeft < 0)
+            $("#video-content .buttons .prev").removeClass("disabled");
+        else
+            $("#video-content .buttons .prev").addClass("disabled");
+
+        if ($("#video-content .buttons .prev").hasClass("disabled") && $("#video-content .buttons .next").hasClass("disabled")) {
+            $("#video-content .buttons").hide();
+        }
+        else {
+            $("#video-content .buttons").show();
+        }
+    }
+
+    ulWidth = $(".thumblist").width();
+
+}
+
+function showAlbumMedia(albumId) {
+	
+
+	if(albumId != 0)
+	{
+		var album = {
+			"id": albumId
+		};
+	
+		$.get(
+			"/photo/getAlbumPhotos",
+			album,
+			function (data) {
+				//zet back to album link
+				$(".media .back").css("display", "inline-block");
+				$(".media .back").attr("href", "#albumsongs/" + albumId);
+				//zet alle fotos
+				setHTMLPhotos(data);
+				
+				$(window).trigger("resize");
+				return false;
+			});
+	
+			//get album title
+			$.get(
+			"/album/AlbumMedia",
+			album,
+			function (data) {
+	
+				$(".media .content h2").html(data.Title);
+				return false;
+			});
+		}
+		
+		else
+		{
+			loadedIndex = 0;
+			//show the first images
+			lazyLoadingImages();
+		}
+		
+		showPhotoContainer();
+		videoIsVisible = false;
+		hideVideo();
+		//toon de photos
+		$("#switcher").find(".photo").removeClass("not-active").addClass("active");
+		$("#switcher").find(".video").removeClass("active").addClass("not-active");
+    }
+
+    function showAllMedia() {
+
+        $(".media .back").hide();
+
+        $.get(
+            "/photo/getAllAlbumPhotos",
+        function (data) {
+
+            //zet album title
+
+            //zet alle fotos
+            setHTMLPhotos(data);
+            $(window).trigger("resize");
+            return false;
+        });
+
+        $(".media .content h2").html("");
+}
+
+function setHTMLPhotos(data) {
+    var htmlPics = "";
+    $(data).each(function (index, photo) {
+
+        htmlPics += "<li>"
+        //link
+        htmlPics += "<a href='/assets/images/photos/" + photo.ImageUrl + "'>";
+        //thumb
+        htmlPics += "<img src='' data-src='/assets/images/photos/thumbs/" + photo.ThumbUrl + "' width='180' alt='' />";
+        htmlPics += "</a>";
+
+        if (photo.Year != "" && photo.Year != null) {
+            htmlPics += "<span class='year'>" + photo.Year + "</span><br />";
+        }
+
+        //title
+        if(photo.Title != "" && photo.Title != null) {
+            htmlPics += "<span class='title'>" + photo.Title + "</span>";
+        }
+
+
+        htmlPics += "</li>";
+
+    });
+    $(".media #photo-content ul.images").html(htmlPics);
+
+    $(".media #photo-content ul.images").css("margin-left", 0);
+    loadedIndex = 0;
+    //show the first images
+    lazyLoadingImages();
+    videoIsVisible = false;
+	hideVideo();
+}
+
+
+function showVideoContainer() {
+    if(newId == "media")
+	{
+        showVideo(true);
+	}
+	
+	
+		
+		
+	$("#video-frame").removeClass("hide");
+	
+	$(".media #media-switcher .photo").fadeOut("slow");
+	$(".media #media-switcher .video").fadeIn("slow");	
+	
+	$(".media #photo-content").fadeOut("slow");
+	$(".media #video-content").fadeIn("slow");	
+	
+	if(isMobile())
+	{
+		$(".media #photo-content").hide();
+		$(".media #video-content").show();	
+	}
+	
+	$("#switcher .video").removeClass("not-active").addClass("active");
+	$("#switcher .photo").removeClass("active").addClass("not-active");
+	
+	videoIsVisible = true;
+}
+
+function showPhotoContainer() {
+    
+	
+	$(".media #media-switcher .photo").fadeIn("slow");
+	$(".media #media-switcher .video").fadeOut("slow");	
+	
+	$(".media #photo-content").fadeIn("slow");
+	$(".media #video-content").fadeOut("slow");
+
+	$("#switcher .photo").removeClass("not-active").addClass("active");
+	$("#switcher .video").removeClass("active").addClass("not-active");
+
+	videoIsVisible = false;
+
+	hideVideo();
+	$("#video-frame").addClass("hide");
+	
+}

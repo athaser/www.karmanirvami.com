@@ -1,0 +1,237 @@
+var browserWidth = getBrowserSize().width;
+var browserHeight = getBrowserSize().height;
+var currentAngle = 0;
+var currentPageIndex = 0;
+
+var containerPos = [];
+var containerPosIE8 = [];
+
+$(document).ready(function () {
+
+    //Even listener voor resize
+    $(window).resize(handleResize);
+    $(window).bind('orientationchange', handleResize);
+
+    handleResize()
+
+    startAnimation();
+
+
+    if (isIpad()) {
+        document.ontouchmove = function (e) { e.preventDefault(); return false; };
+    }
+
+
+
+});
+
+
+function handleResize() {
+    browserWidth = getBrowserSize().width;
+    browserHeight = getBrowserSize().height;
+
+    //Iedere page moet de volledige browser hoogte hebben
+    $(".container .page").each(function (index, item) {
+        $(item).width(browserWidth);
+        $(item).height(browserHeight);
+    });
+
+    var containerX = 0;
+    var containerY = 0;
+    //plaats de .pages op de juiste plaats volgens de browser dimensions
+    //IE8 en lager hebben geen rotatie
+    if (noRotation()) {
+        setPositionsIE8();
+        containerX = containerPosIE8[currentPageIndex].left;
+        containerY = containerPosIE8[currentPageIndex].top;
+    }
+    else {
+        setPositions();
+        containerX = containerPos[currentPageIndex].left;
+        containerY = containerPos[currentPageIndex].top;
+    }
+
+
+
+    $(".container").css("margin-left", containerX + "px");
+    $(".container").css("margin-top", containerY + "px");
+
+
+
+}
+
+
+
+
+function setPositions() {
+
+
+    $(".links").css("left", 0);
+    $(".links").css("top", -browserHeight);
+
+    $(".music").css("left", -browserWidth);
+    $(".music").css("top", 0);
+
+    $(".album-media").css("left", -browserWidth - (browserWidth + browserHeight) / 2);
+    $(".album-media").css("top", -(browserWidth - browserHeight) / 2);
+
+    $(".song-detail").css("left", -browserWidth - (browserWidth + browserHeight) / 2);
+    $(".song-detail").css("top", -(browserWidth - browserHeight) / 2 - browserWidth);
+
+    $(".press").css("left", -browserWidth);
+    $(".press").css("top", browserHeight);
+
+    $(".media").css("left", -2 * browserWidth);
+    $(".media").css("top", browserHeight);
+
+    $(".ontour").css("left", -browserWidth);
+    $(".ontour").css("top", -browserHeight);
+
+    $(".news").css("left", -(browserWidth - browserHeight) / 2);
+    $(".news").css("top", browserWidth - (browserWidth - browserHeight) / 2);
+
+    $(".news-detail").css("left", browserHeight - (browserWidth - browserHeight) / 2);
+    $(".news-detail").css("top", browserWidth - (browserWidth - browserHeight) / 2);
+
+    $(".newsletter").css("left", 2 * browserHeight - (browserWidth - browserHeight) / 2);
+    $(".newsletter").css("top", browserWidth - (browserWidth - browserHeight) / 2);
+
+
+    $(".community").css("top", -(browserWidth - browserHeight) / 2);
+    $(".community").css("left", browserWidth - (browserWidth - browserHeight) / 2);
+
+    $(".vocalmob").css("top", -2 * browserHeight);
+
+
+
+    var home = { id: "home", angle: 0, left: 0, top: 0 };
+    var links = { id: "projects", angle: 0, left: 0, top: browserHeight };
+    var music = { id: "music", angle: 0, left: browserWidth, top: 0 };
+    var albumsongs = { id: "albumsongs", angle: 90, left: browserHeight, top: browserWidth + browserHeight };
+    var songdetail = { id: "songdetail", angle: 90, left: -browserWidth + browserHeight, top: browserWidth + browserHeight };
+    var ontour = { id: "ontour", angle: 0, left: browserWidth, top: browserHeight };
+    var news = { id: "news", angle: 90, left: browserWidth + browserHeight, top: 0 };
+    var newsDetail = { id: "newsdetail", angle: 90, left: browserWidth + browserHeight, top: -browserHeight };
+    var newsletter = { id: "newsletter", angle: 90, left: browserWidth + browserHeight, top: -2 * browserHeight };
+    var media = { id: "media", angle: 0, left: 2 * browserWidth, top: -browserHeight, onEnter: "showAllMedia", onReady: "showVideo" };
+    var press = { id: "press", angle: 0, left: browserWidth, top: -browserHeight };
+    var community = { id: "shop", angle: 90, left: browserHeight, top: -browserWidth };
+    var vocalmob = { id: "vocalmob", angle: 0, left: 0, top: 2 * browserHeight };
+
+    containerPos = [home, links, music, albumsongs, songdetail, ontour, news, newsDetail, newsletter, media, press, community, vocalmob];
+
+}
+
+function setPositionsIE8() {
+
+
+    //page positions
+    $(".news").css("top", browserHeight);
+    $(".ontour").css("top", 2 * browserHeight);
+    $(".music").css("left", browserWidth);
+    $(".media").css("left", -browserWidth);
+    $(".links").css("left", -2 * browserWidth);
+    $(".store").css("left", -2 * browserWidth);
+    $(".news-detail").css("left", browserWidth);
+    $(".news-detail").css("top", browserHeight);
+    $(".newsletter").css("top", 2 * browserHeight);
+    $(".newsletter").css("left", browserWidth);
+    $(".newsletter-thanks").css("top", 2 * browserHeight);
+    $(".newsletter-thanks").css("left", 2 * browserWidth);
+    $(".album-media").css("top", -browserHeight);
+    $(".album-media").css("left", browserWidth);
+    $(".song-detail").css("top", -browserHeight);
+    $(".press").css("left", 2 * browserWidth);
+
+    $(".vocalmob").css("top", -2 * browserHeight);
+    $(".community").css("top", -2 * browserHeight);
+    $(".community").css("left", browserWidth);
+
+    //container positions to view the right page
+    var div1 = { id: "home", angle: 0, left: 0, top: 0 };
+    var div2 = { id: "news", angle: 0, left: 0, top: -browserHeight };
+    var div3 = { id: "ontour", angle: 0, left: 0, top: -2 * browserHeight };
+    var div4 = { id: "music", angle: 0, left: -browserWidth, top: 0 };
+    var div4b = { id: "albumsongs", angle: 0, left: -browserWidth, top: browserHeight };
+    var div4c = { id: "songdetail", angle: 0, left: 0, top: browserHeight };
+    var div5 = { id: "media", angle: 0, left: browserWidth, top: 0, onReady: "showVideo" };
+    var div6 = { id: "projects", angle: 0, left: 2 * browserWidth, top: 0 };
+    var div7 = { id: "newsdetail", angle: 0, left: -browserWidth, top: -browserHeight };
+    var div8 = { id: "press", angle: 0, left: -2 * browserWidth, top: 0 };
+    var div9 = { id: "newsletter", angle: 0, left: -browserWidth, top: -2 * browserHeight };
+    var div10 = { id: "newsletterthanks", angle: 0, left: -2 * browserWidth, top: -2 * browserHeight };
+    var vocalmob = { id: "vocalmob", angle: 0, left: 0, top: 2 * browserHeight };
+    var community = { id: "shop", angle: 0, left: -browserWidth, top: 2 * browserHeight };
+
+    containerPosIE8 = [div1, div2, div3, div4, div4b, div4c, div5, div6, div7, div8, div9, div10, vocalmob, community];
+
+
+        $(".cw180, .ccw180, .cw90, .ccw90").css("-webkit-transform", "rotate(0deg)");
+	    $(".cw180, .ccw180, .cw90, .ccw90").css("-moz-transform", "rotate(0deg)");
+	    $(".cw180, .ccw180, .cw90, .ccw90").css("-ms-transform", "rotate(0deg)");
+	    $(".cw180, .ccw180, .cw90, .ccw90").css("-o-transform","rotate(0deg)");
+	    $(".cw180, .ccw180, .cw90, .ccw90").css("transform", "rotate(0deg)");
+}
+
+
+function noRotation() {
+    if (isMobile()) {
+        return true;
+    } else if ($.browser.version / 1 < 9 && $.browser.msie) {
+        return true;
+    }
+    
+    
+    return false;
+}
+
+function noZooming() {
+    var canNotZoom = false;
+    canNotZoom = noRotation();
+    if ($.browser.mozilla) {
+        canNotZoom = true;
+    }
+    return true;
+    return canNotZoom;
+}
+
+
+
+function getBrowserSize() {
+    var viewportwidth;
+    var viewportheight;
+
+    // the more standards compliant browsers (mozilla/netscape/opera/IE7) use window.innerWidth and window.innerHeight
+
+    if (typeof window.innerWidth != 'undefined') {
+        viewportwidth = window.innerWidth,
+		  viewportheight = window.innerHeight
+    }
+
+    // IE6 in standards compliant mode (i.e. with a valid doctype as the first line in the document)
+
+    else if (typeof document.documentElement != 'undefined'
+		 && typeof document.documentElement.clientWidth !=
+		 'undefined' && document.documentElement.clientWidth != 0) {
+        viewportwidth = document.documentElement.clientWidth,
+		   viewportheight = document.documentElement.clientHeight
+    }
+
+    // older versions of IE
+
+    else {
+        viewportwidth = document.getElementsByTagName('body')[0].clientWidth,
+		   viewportheight = document.getElementsByTagName('body')[0].clientHeight
+    }
+
+
+    //minimum hoogte en breedte van 1024*768
+    if (viewportwidth < 1024)
+        viewportwidth = 1024;
+
+    if (viewportheight < 600)
+        viewportheight = 600;
+
+    return { width: viewportwidth, height: viewportheight };
+
+}
